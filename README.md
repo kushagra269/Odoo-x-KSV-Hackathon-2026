@@ -36,3 +36,5 @@ The UI is mock-powered by default so the screens work immediately.
 - Purchase Order & Invoice
 - Activity & Logs
 - Reports & Analytics
+- Account
+- Settings & Team Management

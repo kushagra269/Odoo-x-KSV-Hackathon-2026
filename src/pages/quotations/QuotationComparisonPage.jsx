@@ -12,62 +12,61 @@ export function QuotationComparisonPage() {
     queryFn: quotationsApi.getAll,
   });
 
-  const lowest = [...(data || [])].sort((a, b) => a.grand_total - b.grand_total)[0];
-
-  const rows = [
-    { label: "Grand Total", key: "grand_total", formatter: formatCurrency },
-    { label: "GST %", key: "gst_percentage", formatter: (value) => `${value}%` },
-    { label: "Delivery (days)", key: "delivery_days", formatter: (value) => value },
-    { label: "Vendor rating", key: "rating", formatter: (value) => `${value}/5` },
-    { label: "Payment terms", key: "payment_terms", formatter: (value) => value },
-  ];
-
   return (
     <div className="page-stack">
       <section className="page-header-card">
         <div>
           <h2>Quotation Comparison</h2>
-          <p>Compare commercial strength, delivery velocity, and vendor trust before you lock approval.</p>
+          <p>Review vendor quotations side by side and approve the preferred option.</p>
         </div>
       </section>
 
       <SurfaceCard className="comparison-card">
-        <div className="comparison-grid">
-          <div className="comparison-grid__criteria">
-            <div className="comparison-grid__header">Criteria</div>
-            {rows.map((row) => (
-              <div className="comparison-grid__cell" key={row.label}>
-                {row.label}
-              </div>
-            ))}
-          </div>
-
-          {data?.map((quotation) => {
-            const isLowest = quotation.id === lowest?.id;
-            return (
-              <div key={quotation.id} className={`comparison-grid__vendor ${isLowest ? "comparison-grid__vendor--best" : ""}`}>
-                <div className="comparison-grid__header">
-                  {quotation.vendor_name}
-                  {isLowest ? <span>Lowest</span> : null}
+        <div className="quote-rail" aria-label="Vendor quotation comparison">
+          {data?.map((quotation) => (
+            <article key={quotation.id} className="quote-card">
+              <div className="quote-card__header">
+                <div>
+                  <span>{quotation.quotation_number}</span>
+                  <h3>{quotation.vendor_name}</h3>
                 </div>
-                {rows.map((row) => (
-                  <div className="comparison-grid__cell" key={`${quotation.id}-${row.key}`}>
-                    {row.formatter(quotation[row.key])}
+                <strong>{formatCurrency(quotation.grand_total)}</strong>
+              </div>
+
+              <div className="quote-card__details">
+                <div>
+                  <span>GST</span>
+                  <strong>{quotation.gst_percentage}%</strong>
+                </div>
+                <div>
+                  <span>Delivery</span>
+                  <strong>{quotation.delivery_days} days</strong>
+                </div>
+                <div>
+                  <span>Rating</span>
+                  <strong>{quotation.rating}/5</strong>
+                </div>
+                <div>
+                  <span>Terms</span>
+                  <strong>{quotation.payment_terms}</strong>
+                </div>
+              </div>
+
+              <div className="quote-card__items">
+                {quotation.line_items?.map((item) => (
+                  <div key={item.id}>
+                    <span>{item.item_name}</span>
+                    <strong>{formatCurrency(item.total_price)}</strong>
                   </div>
                 ))}
-                <Button
-                  variant={isLowest ? "primary" : "secondary"}
-                  onClick={() => navigate("/approvals")}
-                >
-                  {isLowest ? "Select & Approve" : "Select"}
-                </Button>
               </div>
-            );
-          })}
+
+              <Button variant="secondary" onClick={() => navigate("/approvals")}>
+                Approve
+              </Button>
+            </article>
+          ))}
         </div>
-        <p className="comparison-note">
-          Green highlights the lowest landed cost. Selecting a vendor launches the approval workflow.
-        </p>
       </SurfaceCard>
     </div>
   );

@@ -15,6 +15,8 @@ const ApprovalsPage = lazy(() => import("./pages/approvals/ApprovalsPage").then(
 const InvoicePage = lazy(() => import("./pages/invoices/InvoicePage").then((module) => ({ default: module.InvoicePage })));
 const ActivityPage = lazy(() => import("./pages/activity/ActivityPage").then((module) => ({ default: module.ActivityPage })));
 const ReportsPage = lazy(() => import("./pages/reports/ReportsPage").then((module) => ({ default: module.ReportsPage })));
+const AccountPage = lazy(() => import("./pages/account/AccountPage").then((module) => ({ default: module.AccountPage })));
+const SettingsPage = lazy(() => import("./pages/settings/SettingsPage").then((module) => ({ default: module.SettingsPage })));
 
 function MissingPage() {
   return <Navigate to="/dashboard" replace />;
@@ -40,6 +42,8 @@ export default function App() {
               <Route path="/invoices" element={<InvoicePage />} />
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
 

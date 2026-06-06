@@ -66,7 +66,9 @@ export function DashboardPage() {
               <p className="section-heading__eyebrow">Live operations</p>
               <h3>Recent purchase orders</h3>
             </div>
-            <Button variant="ghost">See all</Button>
+            <Button variant="ghost" onClick={() => navigate("/invoices")}>
+              See all
+            </Button>
           </div>
 
           <div className="data-table">
@@ -93,7 +95,7 @@ export function DashboardPage() {
               <p className="section-heading__eyebrow">Finance pulse</p>
               <h3>Spending trend</h3>
             </div>
-            <button className="text-button">
+            <button className="text-button" onClick={() => navigate("/reports")}>
               View report <ArrowRight size={14} />
             </button>
           </div>

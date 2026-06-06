@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { useUiStore } from "../../store/uiStore";
+import { downloadTextFile } from "../../utils/downloads";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 
 export function InvoicePage() {
@@ -30,12 +31,23 @@ export function InvoicePage() {
       <section className="page-header-card invoice-header">
         <div>
           <h2>Purchase Order & Invoice</h2>
-          <p>
-            {invoice?.po_number} · Auto-generated after approval · Print-ready and API-ready for PDF/email actions
-          </p>
+          <p>{invoice?.po_number} · Auto-generated after approval · Print-ready and API-ready for PDF/email actions</p>
         </div>
         <div className="page-actions page-actions--inline">
-          <Button variant="secondary">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              downloadTextFile(
+                `${invoice?.invoice_number || "invoice"}.txt`,
+                [
+                  `Invoice: ${invoice?.invoice_number}`,
+                  `PO: ${invoice?.po_number}`,
+                  `Vendor: ${invoice?.vendor_name}`,
+                  `Grand Total: ${formatCurrency(invoice?.grand_total)}`,
+                ].join("\n")
+              )
+            }
+          >
             <Download size={16} />
             Download PDF
           </Button>
@@ -43,7 +55,16 @@ export function InvoicePage() {
             <Printer size={16} />
             Print
           </Button>
-          <Button variant="secondary">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              pushToast({
+                tone: "success",
+                title: "Invoice email queued",
+                description: "This button is ready to call the backend invoice email endpoint.",
+              })
+            }
+          >
             <Mail size={16} />
             Email invoice
           </Button>

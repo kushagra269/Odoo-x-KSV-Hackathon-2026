@@ -1,4 +1,15 @@
-import { LayoutDashboard, Users, FilePlus2, BadgeIndianRupee, ShieldCheck, ReceiptText, Activity, BarChart3 } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  FilePlus2,
+  BadgeIndianRupee,
+  ShieldCheck,
+  ReceiptText,
+  Activity,
+  BarChart3,
+  Settings,
+  UserCircle2,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const items = [
@@ -10,6 +21,11 @@ const items = [
   { to: "/invoices", label: "Invoices", icon: ReceiptText },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/activity", label: "Activity", icon: Activity },
+];
+
+const utilityItems = [
+  { to: "/account", label: "Account", icon: UserCircle2 },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -40,7 +56,21 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar__footer">
-        <p>Designed for procurement teams that need clarity, speed, and trust.</p>
+        <nav className="sidebar__nav sidebar__nav--utility">
+          {utilityItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `sidebar__link sidebar__link--utility ${isActive ? "sidebar__link--active" : ""}`}
+              >
+                <Icon size={16} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
       </div>
     </aside>
   );

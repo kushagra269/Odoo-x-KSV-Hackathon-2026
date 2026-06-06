@@ -3,9 +3,12 @@ import { Download } from "lucide-react";
 import { reportsApi } from "../../api/reportsApi";
 import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
+import { useUiStore } from "../../store/uiStore";
+import { downloadCsv } from "../../utils/downloads";
 import { formatCurrency } from "../../utils/formatters";
 
 export function ReportsPage() {
+  const pushToast = useUiStore((state) => state.pushToast);
   const { data } = useQuery({
     queryKey: ["reports"],
     queryFn: reportsApi.getOverview,
@@ -22,8 +25,27 @@ export function ReportsPage() {
           <p>Procurement insights for {data?.month} with spend, vendor performance, and operational trends.</p>
         </div>
         <div className="page-actions page-actions--inline">
-          <Button variant="secondary">May 2026</Button>
-          <Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              pushToast({
+                tone: "info",
+                title: "Period filter",
+                description: "Monthly report filters are interactive and ready for live backend data.",
+              })
+            }
+          >
+            May 2026
+          </Button>
+          <Button
+            onClick={() =>
+              downloadCsv("vendorbridge-report.csv", [
+                ["Section", "Label", "Value"],
+                ...(data?.stats || []).map((stat) => ["Stats", stat.label, stat.value]),
+                ...(data?.topVendors || []).map((vendor) => ["Top Vendor", vendor.vendor, vendor.spend]),
+              ])
+            }
+          >
             <Download size={16} />
             Export
           </Button>

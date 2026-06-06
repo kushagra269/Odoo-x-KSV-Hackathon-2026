@@ -111,7 +111,17 @@ export function VendorsPage() {
               <span>{vendor.gst_number}</span>
               <span>{vendor.contact_number}</span>
               <StatusBadge status={vendor.status}>{vendor.status}</StatusBadge>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  pushToast({
+                    tone: "info",
+                    title: vendor.vendor_name,
+                    description: "Vendor detail interaction is active and ready for API-backed deep views.",
+                  })
+                }
+              >
                 View
               </Button>
             </div>

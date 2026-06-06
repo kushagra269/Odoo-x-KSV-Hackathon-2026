@@ -54,25 +54,7 @@ export function LoginPage() {
     <div className="auth-page">
       <div className="auth-page__hero">
         <p className="auth-page__eyebrow">Odoo Hackathon Frontend</p>
-        <h1>Make procurement feel calm, fast, and trustworthy.</h1>
-        <p>
-          VendorBridge brings vendors, RFQs, quotations, approvals, invoices, and
-          analytics into one elegant command center.
-        </p>
-        <div className="auth-page__metrics">
-          <article>
-            <strong>12</strong>
-            <span>Active RFQs</span>
-          </article>
-          <article>
-            <strong>5</strong>
-            <span>Pending approvals</span>
-          </article>
-          <article>
-            <strong>94%</strong>
-            <span>PO fulfillment</span>
-          </article>
-        </div>
+        <h1>Make procurement feel precise, confident, and unmistakably premium.</h1>
       </div>
 
       <div className="auth-card">
@@ -96,7 +78,17 @@ export function LoginPage() {
               <input type="checkbox" defaultChecked />
               <span>Keep me signed in</span>
             </label>
-            <button className="text-button" type="button">
+            <button
+              className="text-button"
+              type="button"
+              onClick={() =>
+                pushToast({
+                  tone: "info",
+                  title: "Reset flow ready",
+                  description: "Connect this action to your backend forgot-password endpoint when available.",
+                })
+              }
+            >
               Forgot password?
             </button>
           </div>

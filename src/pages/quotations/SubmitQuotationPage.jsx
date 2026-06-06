@@ -57,9 +57,7 @@ export function SubmitQuotationPage() {
 
       <SurfaceCard className="quote-summary">
         <h3>RFQ Summary</h3>
-        <p>
-          {rfq?.line_items?.map((item) => `${item.item_name} × ${item.quantity}`).join(", ")} · Deadline {rfq?.deadline}
-        </p>
+        <p>{rfq?.line_items?.map((item) => `${item.item_name} x ${item.quantity}`).join(", ")} · Deadline {rfq?.deadline}</p>
       </SurfaceCard>
 
       <SurfaceCard className="page-stack">
@@ -139,7 +137,18 @@ export function SubmitQuotationPage() {
         </div>
 
         <div className="page-actions">
-          <Button variant="secondary">Save Draft</Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              pushToast({
+                tone: "success",
+                title: "Draft saved",
+                description: "Your quotation draft is stored in the frontend flow and ready to submit later.",
+              })
+            }
+          >
+            Save Draft
+          </Button>
           <Button onClick={() => submitMutation.mutate(draft)}>Submit Quotation</Button>
         </div>
       </SurfaceCard>

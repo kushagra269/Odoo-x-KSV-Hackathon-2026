@@ -1,0 +1,55 @@
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+.stylelintcache
+logs
+*.log
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env.json
+
+# --- Windows 11 OS ---
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.lnk
+*.ini
+$RECYCLE.BIN/
+System Volume Information/
+
+# --- Build and Outputs ---
+dist/
+build/
+out/
+.next/
+.nuxt/
+.docusaurus/
+*.tsbuildinfo
+
+# --- Editors and IDEs ---
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

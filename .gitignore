@@ -1,0 +1,21 @@
+# General system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Resource forks and temporary items
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# AFP/SMB shares
+.AppleDB
+.AppleDesktop
+.apdisk
+

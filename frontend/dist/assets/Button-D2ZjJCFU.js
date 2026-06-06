@@ -1,0 +1,1 @@
+import{j as s}from"./index-y9A0iInR.js";function b({children:t,className:o="",variant:n="primary",size:r="md",type:u="button",...m}){return s.jsx("button",{type:u,className:`button button--${n} button--${r} ${o}`.trim(),...m,children:t})}export{b as B};

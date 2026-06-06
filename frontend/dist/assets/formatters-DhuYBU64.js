@@ -1,0 +1,1 @@
+const e=r=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(r??0),n=r=>{const t=Number(r??0);return t>=1e5?`${(t/1e5).toFixed(1)}L`:e(t)},a=(r,t={})=>new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short",year:"numeric",...t}).format(new Date(r));export{e as a,a as b,n as f};

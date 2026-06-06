@@ -1,0 +1,1 @@
+import{h as r}from"./mockDatabase-Z1ZZFuQo.js";const e={getAll:async t=>{const{data:a}=await r.get("/vendors",{params:t});return a},create:async t=>{const{data:a}=await r.post("/vendors",t);return a}};export{e as v};

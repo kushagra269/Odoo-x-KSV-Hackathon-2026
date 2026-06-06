@@ -1,0 +1,1 @@
+import{j as a}from"./index-y9A0iInR.js";function d({status:e,children:n}){var r;const o=((r=e==null?void 0:e.toLowerCase)==null?void 0:r.call(e))||"neutral";return a.jsx("span",{className:`status-badge status-badge--${o}`,children:n||e})}export{d as S};

@@ -1,0 +1,1 @@
+import{h as r}from"./mockDatabase-Z1ZZFuQo.js";const e={getOne:async()=>{var s;const{data:t}=await r.get("/rfqs");return((s=t==null?void 0:t.items)==null?void 0:s[0])??t},save:async t=>{const{data:s}=await r.post("/rfqs",t);return s}};export{e as r};

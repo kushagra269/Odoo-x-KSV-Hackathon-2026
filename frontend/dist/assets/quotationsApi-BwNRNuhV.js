@@ -1,0 +1,1 @@
+import{h as a}from"./mockDatabase-Z1ZZFuQo.js";const n={getAll:async()=>{const{data:t}=await a.get("/quotations");return t},submit:async t=>{const{data:o}=await a.post("/quotations",t);return o}};export{n as q};

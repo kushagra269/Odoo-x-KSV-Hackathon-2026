@@ -1,9 +1,6 @@
-[README.md](https://github.com/user-attachments/files/28663991/README.md)
-# VendorBridge
+# VendorBridge — Procurement & Vendor Management ERP
 
-**Procurement & Vendor Management ERP** — Odoo Hiring Hackathon
-
-VendorBridge digitizes and centralizes procurement operations — from vendor onboarding and RFQ creation through to approval workflows, purchase orders, and invoice generation — replacing manual procurement processes with structured, auditable workflows.
+A full-stack, modular Procurement ERP built from scratch for the **Odoo Hiring Hackathon**. Replaces scattered spreadsheets, email threads, and manual approval chains with a centralized, real-time procurement platform — covering the complete cycle from vendor onboarding to invoice payment.
 
 ---
 
@@ -13,207 +10,369 @@ VendorBridge digitizes and centralizes procurement operations — from vendor on
 |---|---|---|
 | Frontend | React 18 + Vite | Fast dev server, modern React with hooks |
 | State Management | Zustand | Lightweight, no boilerplate, token stored in memory |
-| Server State | TanStack React Query | Caching, auto-refetch, optimistic updates |
+| Server State | React Query | Caching, auto-refetch, optimistic updates |
 | Forms | React Hook Form + Zod | Schema-based validation, instant field-level errors |
-| HTTP Client | Axios | Interceptors for auth token injection |
+| HTTP Client | Axios | Interceptors for auth token + auto refresh |
 | Backend | Node.js + Express | Modular, fast, widely supported |
-| Validation | Zod | Same schemas shared across backend routes |
-| Authentication | JWT (access token) | Stateless, secure |
+| Validation | Zod | Same schemas enforced across all backend routes |
+| Authentication | JWT (access + refresh) | Stateless, secure, dual-token pattern |
 | Password Hashing | bcryptjs | Industry standard, salt rounds 12 |
-| Database | PostgreSQL | Relational, ACID compliant, production-grade |
+| Database | PostgreSQL (local) | Relational, ACID compliant, production-grade |
 | Query Builder | Knex.js | Migrations, seeds, raw SQL when needed |
 | Logging | Winston | Structured logs, colorized in dev, JSON in prod |
-| Security | Helmet + CORS + Rate Limiter | Security headers, origin restriction, brute force protection |
+| Security | Helmet + CORS + Rate Limiter | Headers, origin restriction, brute force protection |
+| PDF Generation | PDFKit | Server-side invoice PDF with line items + GST breakdown |
+| Email | Nodemailer + Ethereal | Invoice email with HTML template + test preview URL |
 
 ---
 
-## Project Structure
+## Why PostgreSQL — Not Firebase or MongoDB
 
-```
-vendorbridge/
-├── server/                        # Node.js + Express backend
-│   ├── app.js                     # Express app — all routes, middleware
-│   ├── server.js                  # Entry point — listen + graceful shutdown
-│   ├── db.js                      # Knex singleton instance
-│   ├── knexfile.js                # Knex config (dev + prod)
-│   ├── authenticate.js            # JWT verify middleware
-│   ├── authorize.js               # RBAC middleware factory
-│   ├── validate.js                # Zod validation middleware factory
-│   ├── errorHandler.js            # Centralized error handler
-│   ├── logger.js                  # Winston logger (dev: colorized, prod: JSON)
-│   └── db/
-│       └── seeds/
-│           └── 01_seed_all.js     # Full demo dataset
-│
-├── frontend/                      # React 18 + Vite frontend
-│   ├── src/
-│   │   ├── App.jsx                # Routes + protected route wrapper
-│   │   ├── api/
-│   │   │   ├── http.js            # Axios instance + auth interceptor
-│   │   │   ├── authApi.js
-│   │   │   ├── vendorsApi.js
-│   │   │   ├── rfqApi.js
-│   │   │   ├── quotationsApi.js
-│   │   │   ├── approvalsApi.js
-│   │   │   ├── invoicesApi.js
-│   │   │   ├── dashboardApi.js
-│   │   │   ├── reportsApi.js
-│   │   │   └── activityApi.js
-│   │   ├── store/
-│   │   │   ├── authStore.js       # Zustand — user, accessToken, isAuthenticated
-│   │   │   └── uiStore.js         # Zustand — UI state (sidebar, toasts)
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   │   ├── AppShell.jsx   # Main layout wrapper
-│   │   │   │   ├── Sidebar.jsx
-│   │   │   │   └── Topbar.jsx
-│   │   │   ├── ui/
-│   │   │   │   ├── Button.jsx
-│   │   │   │   ├── Field.jsx
-│   │   │   │   ├── StatusBadge.jsx
-│   │   │   │   ├── Stepper.jsx
-│   │   │   │   ├── SurfaceCard.jsx
-│   │   │   │   └── ToastViewport.jsx
-│   │   │   └── ProtectedRoute.jsx
-│   │   ├── pages/
-│   │   │   ├── auth/              # Login, Register
-│   │   │   ├── dashboard/         # KPI cards, recent POs, spending chart
-│   │   │   ├── vendors/           # Vendor list + add vendor
-│   │   │   ├── rfqs/              # Create RFQ (3-step form)
-│   │   │   ├── quotations/        # Submit quotation + comparison view
-│   │   │   ├── approvals/         # Approval workflow stepper
-│   │   │   ├── invoices/          # Invoice detail + mark paid + email
-│   │   │   ├── reports/           # Charts + vendor performance table
-│   │   │   ├── activity/          # Activity timeline + audit log
-│   │   │   ├── account/           # User profile
-│   │   │   └── settings/          # Placeholder settings page
-│   │   └── utils/
-│   │       ├── formatters.js      # Currency, date formatters
-│   │       └── downloads.js       # PDF/CSV download helpers
-│   └── vite.config.js
-│
-└── logs/                          # Winston log output (gitignored)
-    ├── combined.log
-    └── error.log
-```
+The entire procurement flow is built around **multi-step transactional logic** — every RFQ, quotation, approval, PO, and invoice is tightly linked and must stay consistent even if a step fails midway. This requires:
+
+- **ACID transactions** — creating a PO auto-creates an invoice in the same transaction. If the invoice insert fails, the PO rolls back. No orphaned records.
+- **Relational integrity** — foreign keys guarantee every quotation references a valid RFQ and vendor, every PO references an approved quotation, every invoice references a real PO.
+- **Single source of truth** — approval status, PO status, and invoice status are never recomputed from history. They are updated atomically in place.
+- **Complex joins** — the comparison view, approval chain, and dashboard stats all require multi-table joins that are trivial in PostgreSQL and painful in document stores.
 
 ---
 
 ## Database Design
 
-All tables use UUID primary keys generated by PostgreSQL's built-in `gen_random_uuid()`. Foreign keys enforce referential integrity. Indexes are created on every FK column and on high-frequency filter columns (`status`, `deadline`, `po_date`).
-
 ```
 users
- ├── vendors          (created_by → users.id)
- ├── rfqs             (created_by → users.id)
- └── approvals        (initiated_by → users.id)
-      └── approval_steps (approver_id → users.id)
-
-rfqs
- ├── rfq_line_items         (rfq_id → rfqs.id, CASCADE)
- ├── rfq_vendor_assignments (rfq_id → rfqs.id, CASCADE)
- ├── rfq_attachments        (rfq_id → rfqs.id, CASCADE)
- └── quotations             (rfq_id → rfqs.id)
-      └── quotation_line_items (quotation_id → quotations.id, CASCADE)
-           └── rfq_line_items  (rfq_line_item_id → rfq_line_items.id)
-
-quotations → approvals → purchase_orders → invoices
+  └── vendors (created_by → users.id)
+  └── rfqs (created_by → users.id)
+        └── rfq_line_items (rfq_id → rfqs.id)
+        └── rfq_vendor_assignments (rfq_id → rfqs.id, vendor_id → vendors.id)
+        └── rfq_attachments (rfq_id → rfqs.id)
+  └── quotations (vendor_id → vendors.id, rfq_id → rfqs.id)
+        └── quotation_line_items (quotation_id → quotations.id)
+  └── approvals (quotation_id → quotations.id, rfq_id → rfqs.id, vendor_id → vendors.id)
+        └── approval_steps (approval_id → approvals.id, approver_id → users.id)
+  └── purchase_orders (approval_id → approvals.id, quotation_id → quotations.id)
+  └── invoices (po_id → purchase_orders.id, vendor_id → vendors.id)
+  └── activity_logs (performed_by → users.id)
 ```
 
-### Tables
+### Key Tables
 
 | Table | Purpose |
 |---|---|
-| `users` | Accounts with roles: `admin`, `procurement_officer`, `manager`, `vendor` |
-| `vendors` | Vendor registry — GST, category, status, rating |
-| `rfqs` | Request for Quotation header — title, deadline, status |
-| `rfq_line_items` | Products/services requested in an RFQ |
-| `rfq_vendor_assignments` | Which vendors are invited to each RFQ |
-| `rfq_attachments` | Files attached to an RFQ |
-| `quotations` | Vendor's price response to an RFQ |
-| `quotation_line_items` | Per-item pricing within a quotation |
-| `approvals` | Approval workflow record for a selected quotation |
-| `approval_steps` | Individual steps (L1 Review, L2 Approval) within an approval |
-| `purchase_orders` | Auto-generated PO when all approval steps pass |
-| `invoices` | Auto-generated invoice linked to each PO |
-| `activity_logs` | Append-only audit trail for every state-changing action |
+| `users` | UUID PK, role (admin / manager / procurement_officer / vendor), bcrypt hashed password |
+| `vendors` | Master vendor registry — GST, category, status (active/pending/blocked), rating |
+| `rfqs` | Request for Quotation header — auto-numbered RFQ-YYYY-NNNN, status flow |
+| `rfq_line_items` | Line items per RFQ — item name, quantity, unit |
+| `rfq_vendor_assignments` | Which vendors are invited to quote on which RFQ |
+| `quotations` | Vendor quote — server-calculated subtotal, GST, grand total, auto-numbered QT-YYYY-NNNN |
+| `quotation_line_items` | Per-item unit price, delivery days, total price |
+| `approvals` | Approval workflow header — current step, overall status |
+| `approval_steps` | L1 Review (manager) + L2 Approval (admin) with remarks and timestamps |
+| `purchase_orders` | Auto-created on full approval — CGST/SGST split, auto-numbered PO-YYYY-NNNN |
+| `invoices` | Auto-created alongside PO — due date, payment status, mark-paid |
+| `activity_logs` | Audit trail for every action across all modules — JSONB metadata |
 
 ---
 
-## Core Procurement Workflow
+## Architecture — Backend Module Structure
+
+Each feature is a self-contained module:
 
 ```
-1. Procurement Officer creates an RFQ (line items + vendor assignments)
-2. RFQ published → assigned vendors submit quotations
-3. Officer views side-by-side quotation comparison, selects best vendor
-4. Approval workflow initiates (L1 Review → L2 Approval)
-5. All steps approved → Purchase Order auto-generated
-6. Invoice auto-generated from the PO
-7. Invoice downloaded as PDF, printed, or emailed to vendor
-8. Every action logged to activity_logs for full audit trail
+server/src/modules/
+  auth/             → register, login, refresh token, logout
+  users/            → get/update own profile
+  vendors/          → vendor CRUD, status management, GST validation
+  rfqs/             → RFQ creation with line items + vendor assignments, publish
+  quotations/       → quote submission, server-side total calculation, submit flow
+  approvals/        → initiate workflow, L1/L2 step approve/reject, auto-create PO
+  purchase-orders/  → list and detail view, line items from approved quotation
+  invoices/         → list, detail, mark-paid, PDF download, email via Nodemailer
+  reports/          → dashboard stats, spending summary, vendor performance
+  activity/         → paginated audit log with entity type filter
+```
+
+Every module follows the same pattern:
+
+```
+routes.js       → Express router, auth + role middleware chain
+controller.js   → thin handler, calls DB directly, passes errors to next()
+schema.js       → Zod validation schemas for all inputs
 ```
 
 ---
 
-## User Roles
+## Authentication Flow
 
-| Role | Permissions |
-|---|---|
-| `admin` | Full access — user management, vendor management, all modules |
-| `procurement_officer` | Create RFQs, manage vendors, generate POs and invoices |
-| `manager` | Approve or reject procurement steps, monitor workflows |
-| `vendor` | Submit quotations, view assigned RFQs and own POs |
+- **Register** — first_name, last_name, email, password (min 8 chars, 1 uppercase, 1 number, 1 special char), role
+- **Login** — bcrypt compare → issue JWT access token (15 min) + refresh token (7 days), both stateless JWTs
+- **Every request** — Bearer token in Authorization header, verified by `auth` middleware → `req.user = { id, role }`
+- **Role guard** — `requireRole('admin', 'manager')` middleware on sensitive routes
+- **Token refresh** — Axios interceptor catches 401, calls `/auth/refresh`, retries original request silently
+- **Security** — access token in Zustand memory only (never localStorage), rate limiter on auth routes (10 req / 15 min), bcrypt 12 rounds
 
 ---
 
-## API Reference
+## Core Procurement Flow
 
-All endpoints are prefixed with `/api`. All responses follow the shape `{ success: true, data: ... }` or `{ success: false, error: "..." }`.
+### Full Cycle
 
 ```
-Auth
-  POST   /api/auth/login
-  POST   /api/auth/register
+Vendor Onboarded
+      │
+      ▼
+RFQ Created (Draft)
+      │
+      ▼
+RFQ Published ──► Vendors Invited (rfq_vendor_assignments status = invited)
+      │
+      ▼
+Vendors Submit Quotations ──► Totals Calculated Server-Side
+      │                        subtotal = Σ(unit_price × qty)
+      │                        gst_amount = subtotal × gst% / 100
+      │                        grand_total = subtotal + gst_amount
+      ▼
+Quotation Comparison View
+  (side-by-side: price, GST%, delivery days, vendor rating)
+  Lowest price column highlighted green
+      │
+      ▼
+Procurement Officer Selects Vendor ──► Initiates Approval Workflow
+      │
+      ▼
+┌─────────────────────────────┐
+│     APPROVAL WORKFLOW       │
+│                             │
+│  Step 1: Submitted ✓        │
+│  Step 2: L1 Review          │ ◄── Manager approves/rejects
+│  Step 3: L2 Approval        │ ◄── Admin approves/rejects
+│  Step 4: Generate PO  ✓     │ ◄── Auto-triggered on full approval
+└─────────────────────────────┘
+      │
+      ▼
+Purchase Order Auto-Created
+  po_number = PO-YYYY-NNNN
+  CGST 9% + SGST 9% split from quotation subtotal
+      │
+      ▼
+Invoice Auto-Created alongside PO
+  invoice_number = INV-YYYY-NNNN
+  due_date = po_date + 30 days
+  status = pending_payment
+      │
+      ▼
+Invoice → Download PDF / Email to Vendor / Mark as Paid
+      │
+      ▼
+Activity Log Updated at Every Step
+```
 
-Vendors
-  GET    /api/vendors                     ?status=&category=&search=
-  POST   /api/vendors
-  PATCH  /api/vendors/:id/status
+---
 
-RFQs
-  GET    /api/rfqs
-  POST   /api/rfqs
+### RFQ Status Flow
 
-Quotations
-  GET    /api/quotations                  ?rfq_id=
-  POST   /api/quotations
+```
+Draft ──► Published ──► Closed
+  │                       │
+  └──► Cancelled          └── (after PO generated)
+```
 
-Approvals
-  GET    /api/approvals
-  POST   /api/approvals/:id/steps/:stepId/approve
-  POST   /api/approvals/:id/steps/:stepId/reject
+### Quotation Status Flow
 
-Purchase Orders
-  GET    /api/purchase-orders
+```
+Draft ──► Submitted ──► Selected ──► (PO Generated)
+                   └──► Rejected
+```
 
-Invoices
-  GET    /api/invoices
-  PATCH  /api/invoices/:id/mark-paid
-  POST   /api/invoices/:id/email
+### Approval Status Flow
 
-Reports
-  GET    /api/reports/dashboard-stats
-  GET    /api/reports/spending-summary    ?month=YYYY-MM
-  GET    /api/reports/vendor-performance  ?month=YYYY-MM
-  GET    /api/reports/procurement-stats   ?month=YYYY-MM
+```
+Pending ──► Step 2 (L1 Manager) ──► Step 3 (L2 Admin) ──► Approved ──► PO Auto-Created
+                    │                        │
+                    └── Rejected             └── Rejected
+                         │                       │
+                         └───────────────────────┘
+                                    │
+                              Approval Rejected
+                          Quotation reverted to submitted
+```
 
-Activity
-  GET    /api/activity                    ?entity_type=
+### Invoice Status Flow
 
-Health
-  GET    /
-  GET    /health
+```
+pending_payment ──► paid
+        │
+        └──► overdue  (scheduled job / manual flag)
+```
+
+---
+
+### Auto-Number Reference Format
+
+All documents are auto-numbered with year + zero-padded sequence:
+
+```
+RFQ-2026-0001   → Request for Quotation
+QT-2026-0001    → Quotation
+PO-2026-0001    → Purchase Order
+INV-2026-0001   → Invoice
+```
+
+Format: `<PREFIX>-<YYYY>-<NNNN>` — resets per prefix per year, padded to 4 digits.
+
+---
+
+## Features
+
+### Authentication
+- Register with role-based access (admin / manager / procurement_officer / vendor)
+- Login with JWT dual-token pattern, access token in memory
+- Password strength enforcement — uppercase, number, special character required
+- Rate limiting on all auth routes — 10 attempts per 15 minutes
+
+### Dashboard
+- Live stat cards — Active RFQs, Pending Approvals, POs This Month (count + value), Overdue Invoices
+- Recent purchase orders table (last 5)
+- Monthly spending bar chart — last 6 months via Recharts
+- Quick action buttons — New RFQ, Add Vendor, View Invoices
+- All data from a single `/api/reports/dashboard-stats` call
+
+### Vendor Management
+- Full CRUD with GST number validation (Indian GST regex)
+- Status management — Active / Pending / Blocked with tab filters and badge counts
+- Search by vendor name, GST number, or contact name
+- Per-vendor stats — total POs and total spend
+- Activity logged on every create/update/status change
+
+### RFQ Management
+- Create with dynamic line items (item name, quantity, unit) and vendor assignment
+- 3-step creation wizard — details → line items + vendors → attachments
+- Auto-generated RFQ number on creation
+- Publish flow — status changes to published, vendor assignments set to invited
+- Detail view shows line items, assigned vendors, and their quote submission status
+
+### Quotation Submission & Comparison
+- Vendors fill unit prices and delivery days per line item
+- **All totals calculated server-side** — subtotal, GST amount, grand total
+- Vendor assignment status auto-updated to submitted on quote creation
+- **Side-by-side comparison table** — Grand Total | GST% | Delivery Days | Vendor Rating | Payment Terms
+- Lowest price column highlighted in green
+- One click to select a vendor and initiate the approval workflow
+
+### Approval Workflow
+- Two-step workflow auto-assigned — L1 to first manager, L2 to admin
+- 4-step visual stepper: Submitted → L1 Review → L2 Approval → Generate PO
+- Approve/Reject buttons only visible to the assigned approver for the active step
+- Approval remarks captured per step with timestamp
+- On full approval: PO + Invoice auto-created in a single database transaction
+- On any rejection: approval marked rejected, quotation reverted
+
+### Purchase Orders
+- Auto-created on full approval — never created manually
+- GST split into CGST (9%) + SGST (9%) — Indian standard
+- Linked to RFQ, quotation, vendor, and approval for full traceability
+- Line items carried over from the approved quotation
+
+### Invoices
+- Auto-created alongside the PO
+- Due date set to PO date + 30 days
+- **PDF download** — professional layout with vendor info, line items, CGST/SGST breakdown, grand total
+- **Email to vendor** — HTML email via Nodemailer, Ethereal test account, preview URL returned in response
+- **Mark as Paid** — updates status and records paid_at timestamp
+- Print support via `window.print()` with CSS media query hiding nav
+
+### Reports & Analytics
+- Monthly spending summary — last 6 months bar chart
+- Vendor performance table — total POs, total spend, rating per vendor
+- Procurement stats — total RFQs, POs, invoice value, active vendor count
+- All data served from dedicated `/api/reports/*` endpoints
+
+### Activity Logs
+- Every action across all modules logged to `activity_logs` with entity type, entity ID, action description, and JSONB metadata
+- Filter by entity type — RFQ, quotation, approval, invoice, vendor
+- Timeline view with relative timestamps
+- Paginated with load-more
+
+---
+
+## API Endpoints
+
+### AUTH `/api/auth`
+```
+POST   /register        → Register new user
+POST   /login           → Login, returns access + refresh JWT
+POST   /refresh         → Refresh access token
+POST   /logout          → Invalidate refresh token
+```
+
+### USERS `/api/users`
+```
+GET    /me              → Get own profile (no password)
+PATCH  /me              → Update first_name, last_name, phone, country, photo
+```
+
+### VENDORS `/api/vendors`
+```
+GET    /                → List vendors (filter: status, category, search)
+POST   /                → Create vendor [admin, procurement_officer]
+GET    /:id             → Vendor detail with PO count + total spend
+PATCH  /:id             → Update vendor [admin, procurement_officer]
+PATCH  /:id/status      → Change status active/pending/blocked [admin, procurement_officer]
+```
+
+### RFQs `/api/rfqs`
+```
+GET    /                → List RFQs (filter: status, created_by, pagination)
+POST   /                → Create RFQ with line items + vendor assignments [admin, procurement_officer]
+GET    /:id             → RFQ detail with line items + vendor assignments
+PATCH  /:id             → Update draft RFQ [admin, procurement_officer]
+POST   /:id/publish     → Publish RFQ, invite assigned vendors [admin, procurement_officer]
+```
+
+### QUOTATIONS `/api/quotations`
+```
+GET    /                → List quotations (filter: rfq_id, vendor_id)
+POST   /                → Submit quotation with server-side total calculation
+GET    /:id             → Quotation detail with line items + vendor + RFQ info
+PATCH  /:id             → Update draft quotation
+POST   /:id/submit      → Submit quotation (draft → submitted)
+```
+
+### APPROVALS `/api/approvals`
+```
+GET    /                → List all approvals with quotation + vendor + RFQ joined
+POST   /                → Initiate approval workflow [admin, procurement_officer, manager]
+GET    /:id             → Approval detail with steps + approver info + line items
+POST   /:id/steps/:stepId/approve  → Approve a step [admin, manager]
+POST   /:id/steps/:stepId/reject   → Reject a step [admin, manager]
+```
+
+### PURCHASE ORDERS `/api/purchase-orders`
+```
+GET    /                → List POs with vendor + RFQ + invoice joined (filter: status)
+GET    /:id             → PO detail with line items + vendor + invoice
+```
+
+### INVOICES `/api/invoices`
+```
+GET    /                → List invoices with vendor + PO joined (filter: status)
+GET    /:id             → Invoice detail with full line items
+PATCH  /:id/mark-paid   → Mark invoice as paid [admin, procurement_officer, manager]
+GET    /:id/pdf         → Download invoice as PDF (streamed)
+POST   /:id/email       → Email invoice to vendor via Nodemailer
+```
+
+### REPORTS `/api/reports`
+```
+GET    /dashboard-stats     → Stat cards + recent POs for dashboard
+GET    /spending-summary    → Monthly spending last 6 months
+GET    /vendor-performance  → Per-vendor PO count, spend, rating
+GET    /procurement-stats   → Total RFQs, POs, invoice value, active vendors
+```
+
+### ACTIVITY `/api/activity`
+```
+GET    /                → Paginated activity logs (filter: entity_type)
 ```
 
 ---
@@ -221,110 +380,185 @@ Health
 ## Setup & Installation
 
 ### Prerequisites
-- Node.js ≥ 18
-- PostgreSQL ≥ 14 running locally
+- Node.js >= 18
+- PostgreSQL >= 14 running locally
 - Git
 
 ### 1. Clone the repository
-
 ```bash
-git clone <repo-url>
+git clone https://github.com/yuggandhii/vendorbridge.git
 cd vendorbridge
 ```
 
-### 2. Create the database
-
-```bash
-psql -U postgres -c "CREATE DATABASE vendorbridge;"
-```
-
-### 3. Configure backend environment
-
+### 2. Setup Backend
 ```bash
 cd server
 cp .env.example .env
 ```
 
-Open `server/.env` and set your values:
-
+Open `.env` and configure:
 ```env
 PORT=3000
 NODE_ENV=development
+CLIENT_ORIGIN=http://localhost:5173
 
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=vendorbridge
 DB_USER=postgres
-DB_PASS=your_postgres_password
+DB_PASSWORD=your_postgres_password
 
-JWT_ACCESS_SECRET=replace_with_a_long_random_string
-JWT_ACCESS_EXPIRES=15m
-
-CLIENT_URL=http://localhost:5173
+JWT_ACCESS_SECRET=your_access_secret_here
+JWT_REFRESH_SECRET=your_refresh_secret_here
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
-### 4. Install backend dependencies
-
 ```bash
-# still inside server/
 npm install
 ```
 
-### 5. Run migrations
-
+### 3. Create Database
 ```bash
-npx knex migrate:latest
+psql -U postgres -c "CREATE DATABASE vendorbridge;"
 ```
 
-> Migrations run in numbered order and create all 13 tables with foreign keys, indexes, and PostgreSQL enum types.
+### 4. Run Migrations
+```bash
+npm run migrate
+```
 
-### 6. Seed demo data
-
+### 5. Run Seeds (demo data)
 ```bash
 npm run seed
 ```
 
-This loads 4 users, 5 vendors, 2 RFQs, 3 quotations, an in-progress approval, a completed PO, and a linked invoice.
-
-### 7. Start the backend
-
+### 6. Start Backend
 ```bash
 npm run dev
-# API running on http://localhost:3000
+# Running on http://localhost:3000
 ```
 
-### 8. Install and start the frontend
-
+### 7. Setup Frontend
 ```bash
-cd ../frontend
+cd ../client
 npm install
 npm run dev
-# UI running on http://localhost:5173
+# Running on http://localhost:5173
 ```
 
 ---
 
 ## Demo Credentials
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@vendorbridge.com | Admin@1234 |
-| Procurement Officer | officer@vendorbridge.com | Officer@1234 |
-| Manager (L1) | rahul@vendorbridge.com | Manager@1234 |
-| Manager (L2) | priya@vendorbridge.com | Manager@1234 |
+| Role | Email | Password | Access |
+|---|---|---|---|
+| Admin | admin@vendorbridge.com | Password1@ | Full access — all modules including approvals |
+| Procurement Officer | procurement@vendorbridge.com | Password1@ | Vendors, RFQs, comparison, invoices |
+| Manager | manager@vendorbridge.com | Password1@ | Approve/reject workflow steps, reports |
+| Vendor | vendor@vendorbridge.com | Password1@ | Submit quotations only |
 
 ---
 
-## Security
+## Project Structure
 
-- Passwords hashed with bcryptjs — salt rounds 12, plaintext never stored or logged
-- JWT access token lives in Zustand memory only — never written to `localStorage`
-- Token injected into every request via Axios request interceptor
-- Helmet.js sets security headers (`X-Frame-Options`, `CSP`, `HSTS`, etc.) on all responses
-- CORS restricted to `http://localhost:5173` only
-- Global rate limiter: 100 requests per 15 minutes per IP
-- Zod schema validation on all POST/PATCH request bodies before any business logic runs
-- PostgreSQL constraint errors (duplicate GST, duplicate email) caught and returned as clean 409 responses
-- Passwords never returned in any API response — stripped before serialization
+```
+vendorbridge/
+├── client/                          # React 18 + Vite frontend
+│   ├── src/
+│   │   ├── api/                     # Axios instance + per-module API functions
+│   │   ├── components/              # Shared UI — Button, Badge, Table, Modal, Stepper, StatCard
+│   │   ├── pages/
+│   │   │   ├── auth/                # Login, Register
+│   │   │   ├── dashboard/           # Stats cards + spending chart
+│   │   │   ├── vendors/             # Vendor list + add modal
+│   │   │   ├── rfqs/                # RFQ list + 3-step create wizard
+│   │   │   ├── quotations/          # Submit quotation + comparison view
+│   │   │   ├── approvals/           # Approval workflow stepper
+│   │   │   ├── purchase-orders/     # PO list
+│   │   │   ├── invoices/            # Invoice detail + PDF + email
+│   │   │   ├── reports/             # Analytics charts
+│   │   │   └── activity/            # Activity log timeline
+│   │   ├── store/                   # Zustand — auth store (token in memory)
+│   │   ├── hooks/                   # Custom React Query hooks per module
+│   │   └── App.jsx                  # Routes with ProtectedRoute + role guards
+│   └── index.html
+│
+├── server/
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── db.js                # Knex PostgreSQL connection
+│   │   │   └── logger.js            # Winston logger
+│   │   ├── middleware/
+│   │   │   ├── auth.js              # JWT verify + requireRole guard
+│   │   │   ├── validate.js          # Zod schema middleware
+│   │   │   └── errorHandler.js      # Global error handler
+│   │   └── modules/
+│   │       ├── auth/
+│   │       ├── users/
+│   │       ├── vendors/
+│   │       ├── rfqs/
+│   │       ├── quotations/
+│   │       ├── approvals/
+│   │       ├── purchase-orders/
+│   │       ├── invoices/
+│   │       ├── reports/
+│   │       └── activity/
+│   └── app.js
+│
+├── db/
+│   ├── migrations/                  # 13 Knex migrations
+│   └── seeds/                       # Full demo seed — users, vendors, RFQs, quotations, approval, PO, invoice
+│
+├── .env.example
+├── knexfile.js
+└── package.json
+```
 
 ---
+
+## Git Workflow
+
+```
+main      ← production ready, final hackathon submission
+dev       ← active development branch
+feature/* ← individual features merged into dev via PR
+```
+
+Commit convention used throughout:
+
+```
+feat(vendors): add GST validation and status filter
+feat(approvals): auto-create PO on full approval
+fix(quotations): server-side total rounding
+chore(db): add index on activity_logs entity_type
+docs(readme): add full API reference
+refactor(auth): extract requireRole to separate middleware
+```
+
+---
+
+## Security Highlights
+
+- Passwords hashed with **bcrypt** (salt rounds 12) — plaintext never stored or logged
+- JWT access token lives in **Zustand memory only** — never localStorage, never sessionStorage
+- **Rate limiter** on auth routes — 10 requests per 15 minutes per IP
+- **Helmet.js** security headers on all responses (XSS, CSRF, clickjacking protection)
+- **CORS** restricted to `http://localhost:5173` only
+- All inputs validated with **Zod** before any DB query runs
+- Passwords never returned in any API response — explicitly excluded in every select
+- **Role-based access** enforced server-side on every sensitive route — frontend role checks are UI-only
+- SQL injection impossible — all queries use **Knex parameterized bindings**
+- Approval step actions verify `req.user.id === step.approver_id` — cannot approve another user's step
+
+---
+
+## Key Design Decisions
+
+**Why totals are calculated server-side**: Unit prices and quantities come from the client but grand totals, GST amounts, and subtotals are always computed on the server. This prevents price manipulation where a malicious client could submit a ₹0 grand total for a ₹2,50,000 order.
+
+**Why PO and Invoice are auto-created**: Once an approval is fully approved there is no ambiguity — a PO must exist. Making it automatic inside the same database transaction as the final approval step ensures the system is never in an inconsistent state (approval approved but no PO).
+
+**Why approval steps use a separate table**: Having `approval_steps` as rows (not columns on `approvals`) means the number of steps can change without a schema migration, each step has its own timestamps and remarks, and querying "which approvals need my action" is a simple `WHERE approver_id = ? AND status = 'pending'`.
+
+**Why activity logs use JSONB metadata**: Different actions have different context — a vendor status change logs old and new status, a PO creation logs PO number and amount, a quotation submission logs grand total. JSONB lets each log entry carry whatever metadata is relevant without requiring separate columns for every event type.

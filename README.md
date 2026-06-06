@@ -1,6 +1,26 @@
-# VendorBridge — Procurement & Vendor Management ERP
+<p align="center">
+  <img src="static/assets/logo.png" width="90" />
+</p>
+<h1 align="center">VendorBridge</h1>
+<p align="center">
+  <strong>Procurement & Vendor Management ERP — End-to-end RFQ workflows, multi-step approvals,<br/>automated PO generation, and GST-compliant invoicing for modern procurement teams.</strong>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" />
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=node.js" />
+  <img src="https://img.shields.io/badge/PostgreSQL-14-4169E1?style=flat-square&logo=postgresql" />
+  <img src="https://img.shields.io/badge/Knex.js-Migrations-E16426?style=flat-square" />
+  <img src="https://img.shields.io/badge/JWT-Auth-000000?style=flat-square&logo=jsonwebtokens" />
+  <img src="https://img.shields.io/badge/PDFKit-Invoices-CC0000?style=flat-square" />
+</p>
+<p align="center">
+  <strong>Vendor Onboarding · RFQ Management · Quotation Comparison · Approval Workflows · Auto PO & Invoice</strong>
+</p>
 
-A full-stack, modular Procurement ERP built from scratch for the **Odoo Hiring Hackathon**. Replaces scattered spreadsheets, email threads, and manual approval chains with a centralized, real-time procurement platform — covering the complete cycle from vendor onboarding to invoice payment.
+---
+# Overview
+
+A full-stack, modular Procurement ERP built from scratch. Replaces scattered spreadsheets, email threads, and manual approval chains with a centralized, real-time procurement platform — covering the complete cycle from vendor onboarding to invoice payment.
 
 ---
 
@@ -562,3 +582,29 @@ refactor(auth): extract requireRole to separate middleware
 **Why approval steps use a separate table**: Having `approval_steps` as rows (not columns on `approvals`) means the number of steps can change without a schema migration, each step has its own timestamps and remarks, and querying "which approvals need my action" is a simple `WHERE approver_id = ? AND status = 'pending'`.
 
 **Why activity logs use JSONB metadata**: Different actions have different context — a vendor status change logs old and new status, a PO creation logs PO number and amount, a quotation submission logs grand total. JSONB lets each log entry carry whatever metadata is relevant without requiring separate columns for every event type.
+## 👨‍💻 Contributors
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://avatars.githubusercontent.com/yuggandhii?s=120" width="100px;" height="100px;" style="border-radius:50%" alt="Yug"/><br/>
+        <strong>🗄️ Backend & Database</strong><br/>
+        <strong>Yug Gandhi</strong><br/>
+        <a href="https://github.com/yuggandhii">🌐 GitHub</a>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://avatars.githubusercontent.com/kushagra269?s=120" width="100px;" height="100px;" style="border-radius:50%" alt="Kushagra"/><br/>
+        <strong>🎨 Frontend & React Vite</strong><br/>
+        <strong>Kushagra Mali</strong><br/>
+        <a href="https://github.com/kushagra269">🌐 GitHub</a>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://avatars.githubusercontent.com/Chaos05811?s=120" width="100px;" height="100px;" style="border-radius:50%" alt="Jaypalsinh"/><br/>
+        <strong>🔗 Routes & Integrations</strong><br/>
+        <strong>Jaypalsinh Chavda</strong><br/>
+        <a href="https://github.com/Chaos05811">🌐 GitHub</a>
+      </td>
+    </tr>
+  </table>
+</p>
